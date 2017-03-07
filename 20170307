@@ -1,0 +1,26 @@
+Function gettasks($Path)
+{
+  $OutPut = $Path + "\tasklist.txt"
+
+  "実行時刻,タスク名,結果" | Out-File $output -encoding default
+
+  $Tasks = schtasks.exe /query /V /FO CSV | ConvertFrom-Csv | Where { $_."ユーザーとして実行" -Like "*administrator" }
+  ForEach ($Task in $Tasks) {
+    If ($Task."実行するタスク" -match "TaskSchtCheck"){
+　　　　#自分のタスクは除く
+　　　　continue
+　  }
+    $BeforeRunTime = $Task."前回の実行時刻"
+    $TaskName = $Task."タスク名".SubString(1)
+    $BeforeResult = $Task."前回の結果"
+    "$BeforeRunTime,$TaskName,$BeforeResult" | Out-File $OutPut -append -encoding default
+  }
+}
+
+Function Get-ScriptDirectory
+{
+    Split-Path $script:MyInvocation.MyCommand.Path
+}
+
+#実行
+gettasks(Get-ScriptDirectory)

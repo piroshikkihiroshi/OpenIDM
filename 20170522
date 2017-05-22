@@ -1,0 +1,69 @@
+
+技術的に自由なブログ
+
+2013年11月22日金曜日
+tnsname.ora設定無しでsqlplus
+Oracleを使っている時の不満の一つがtnsname.ora。
+ODBCで接続する場合ですら管理者権限が必要なtnsname.oraにHost名などを記述する必要がある。
+
+例えばこんなぐらいに定義が必要です。
+POD =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = PODS.GATE.COM)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (SID = ODS)
+    )
+  )
+sqlplusからこれを使って接続する場合は
+sqlplus user/password@pod
+で接続出来ます。
+
+で、問題はtnsname.oraを編集したく無い場合。Windowsでは
+Oracle 8i, 9i
+sqlplus user/password@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=PODS.GATE.COM)(PORT=1521)))(CONNECT_DATA=(SID=ODS)))
+    
+Oracle 10g(R2?)以降
+sqlplus USER/PASSWORD@//PODS.GATE.COM:1521/ODS
+あ〜、すっきりした。
+
+参照：Ask Tom "How to connect SQLPlus without tnsnames.ora"
+投稿者 Technically Free 時刻: 1:40 
+ラベル: Oracle, SQL
+0 件のコメント:
+コメントを投稿
+ 
+次の投稿 前の投稿 ホーム
+登録: コメントの投稿 (Atom)
+フォロワー
+
+
+ブログ アーカイブ
+
+►  2015 (2)
+►  2014 (12)
+▼  2013 (18)
+▼  11月 (3)
+tnsname.ora設定無しでsqlplus
+root権限無しでPerlモジュールを使う
+FreeBSDにPerl, curl, Mojoliciousをインストール
+►  9月 (7)
+►  7月 (1)
+►  5月 (3)
+►  4月 (3)
+►  2月 (1)
+►  2010 (5)
+自己紹介
+
+Technically Free
+詳細プロフィールを表示
+
+ 
+
+ 
+
+ 
+
+ 
+「シンプル」テーマ. Powered by Blogger.

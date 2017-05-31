@@ -15,6 +15,22 @@ Sub Main()
     WScript.Echo Err.Description
     WScript.Quit(-1)
   End If
+  
+  WScript.Echo "OracleDB 検索開始"
+  Dim rs
+  Set rs = connect.Execute("select * from TABLE01")
+  If Err.Number <> 0 Then
+    WScript.Echo Err.Number
+    WScript.Echo Err.Source
+    WScript.Echo Err.Description
+    WScript.Quit(-1)
+  End If
+  Do Until rs.Eof = True
+    WScript.echo "ID:" & rs("ID") & "  名前:" & rs("NAME") & "ふりがな:" & rs("FURIGANA")
+    rs.MoveNext
+  Loop
+  rs.Close
+  Set rs = Nothing
               
   WScript.Echo "OracleDB 切断"
   connect.Close

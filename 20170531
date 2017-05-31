@@ -1,0 +1,22 @@
+Option Explicit
+
+Call Main()
+Sub Main()
+  On Error Resume Next
+
+  Dim connect
+  Set connect = CreateObject("ADODB.Connection")
+  WScript.Echo "OracleDB 接続開始"
+  connect.Open "Driver={Microsoft ODBC for Oracle};" & _
+              "CONNECTSTRING=XE; UID=xxx; PWD=yyy;"
+  If Err.Number <> 0 Then
+    WScript.Echo Err.Number
+    WScript.Echo Err.Source
+    WScript.Echo Err.Description
+    WScript.Quit(-1)
+  End If
+              
+  WScript.Echo "OracleDB 切断"
+  connect.Close
+  Set connect = Nothing
+End Sub

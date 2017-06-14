@@ -1,0 +1,112 @@
+package net.kuwalab;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
+
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+
+public class LdapTest {
+    private DirContext ctx;
+
+    public static void main(String[] args) {
+        // LDAP接続
+        LdapTest lt = new LdapTest();
+        boolean result = lt.connect("ldap://192.168.0.201", null,
+                "dc=kuwalab,dc=net", "uid=namakuwa,ou=user", "test");
+        if (!result) {
+            System.out.println("接続失敗");
+            return;
+        }
+        System.out.println("接続成功");
+        lt.search("uid=namakuwa,ou=user,dc=kuwalab,dc=net", "uid=namakuwa");
+        lt.close();
+
+        result = lt.connect("ldap://192.168.0.201", null, "dc=kuwalab,dc=net",
+                "cn=Manager", "test");
+        if (!result) {
+            System.out.println("接続失敗");
+            return;
+        }
+        System.out.println("接続成功");
+        lt.search("ou=user,dc=kuwalab,dc=net", "uid=*");
+        lt.close();
+    }
+
+    public boolean connect(String url, String port, String dn, String id,
+            String password) {
+        try {
+            Hashtable<String, String> env = new Hashtable<String, String>();
+            env.put(Context.INITIAL_CONTEXT_FACTORY,
+                    "com.sun.jndi.ldap.LdapCtxFactory");
+            StringBuilder sb = new StringBuilder();
+            sb.append(url);
+            if (port != null) {
+                sb.append(":").append(port);
+            }
+            env.put(Context.PROVIDER_URL, sb.toString());
+            env.put(Context.SECURITY_AUTHENTICATION, "simple");
+            env.put(Context.SECURITY_PRINCIPAL, id + "," + dn);
+            env.put(Context.SECURITY_CREDENTIALS, password);
+
+            ctx = new InitialDirContext(env);
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (ctx != null) {
+                try {
+                    ctx.close();
+                } catch (Exception ex) {
+                    // 無視
+                }
+                ctx = null;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public void close() {
+        if (ctx != null) {
+            try {
+                ctx.close();
+            } catch (Exception ex) {
+                // 無視
+            }
+        }
+    }
+
+    public void search(String baseDn, String filter) {
+        SearchControls searchControls = new SearchControls();
+        // 以下のURL参照。
+        // http://java.sun.com/j2se/1.5.0/ja/docs/ja/api/javax/naming/directory/SearchControls.html
+        searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        try {
+            // 検索結果のエントリを取得
+            NamingEnumeration<SearchResult> result = ctx.search(baseDn, filter,
+                    searchControls);
+            
+            // エントリを1件ずつ処理
+            while (result.hasMore()) {
+                SearchResult sr = result.next(); // エントリ
+                NamingEnumeration attributes = sr.getAttributes().getAll();
+                // エントリに含まれる属性を1件ずつ取得して処理
+                while (attributes.hasMore()) {
+                    Attribute attr = (Attribute) attributes.nextElement();
+                    Enumeration values = attr.getAll();
+                    while (values.hasMoreElements()) {
+                        System.out.println(attr.getID() + "="
+                                + values.nextElement());
+                    }
+                }
+            }
+        } catch (NamingException e) {
+            e.printStackTrace();
+        }
+    }
+}

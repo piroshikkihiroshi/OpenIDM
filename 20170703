@@ -1,0 +1,386 @@
+import java.io.PrintStream;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
+import oracle.jdbc.pool.OracleDataSource;
+
+public class ConnectDB
+{
+  String type = "";
+  String user = "";
+  String password = "";
+  String host = "";
+  Connection conn = null;
+  ResultSet results;
+  ResultSetMetaData rsmd;
+  DatabaseMetaData dma;
+  MyResultSet resultset;
+  OracleDataSource ods;
+  
+  public ConnectDB(TNSUrl paramTNSUrl)
+  {
+    this.type = paramTNSUrl.getType();
+    this.user = paramTNSUrl.getUser();
+    this.password = paramTNSUrl.getPlainPwd();
+    this.host = paramTNSUrl.getHost();
+  }
+  
+  public String Open()
+    throws Exception
+  {
+    OracleDataSource localOracleDataSource = new OracleDataSource();
+    
+    localOracleDataSource.setUser(this.user);
+    localOracleDataSource.setPassword(this.password);
+    try
+    {
+      if (this.type.toLowerCase().equals("thin"))
+      {
+        StringTokenizer localStringTokenizer = new StringTokenizer(this.host, ":");
+        String str1 = "";
+        String str2 = "";
+        String str3 = "";
+        try
+        {
+          str1 = localStringTokenizer.nextToken();
+          str2 = localStringTokenizer.nextToken();
+          str3 = localStringTokenizer.nextToken();
+        }
+        catch (NoSuchElementException localNoSuchElementException) {}
+        localOracleDataSource.setURL("jdbc:oracle:thin:@(description=(address_list=(address=(protocol=tcp)(host=" + str1 + ")(port=" + str2 + ")))(source_route=yes)(connect_data=(sid=" + str3 + ")))");
+      }
+      else
+      {
+        localOracleDataSource.setURL("jdbc:oracle:oci:@" + this.host);
+      }
+      this.conn = localOracleDataSource.getConnection();
+      this.conn.setAutoCommit(false);
+    }
+    catch (UnsatisfiedLinkError localUnsatisfiedLinkError)
+    {
+      this.conn = null;
+      localUnsatisfiedLinkError.printStackTrace();
+      throw localUnsatisfiedLinkError;
+    }
+    catch (SQLException localSQLException)
+    {
+      this.conn = null;
+      if ((this.type.toLowerCase().equals("thin")) && (localSQLException.getErrorCode() == 17002)) {
+        try
+        {
+          localOracleDataSource = new OracleDataSource();
+          localOracleDataSource.setUser(this.user);
+          localOracleDataSource.setPassword(this.password);
+          localOracleDataSource.setURL("jdbc:oracle:thin:@" + this.host);
+          this.conn = localOracleDataSource.getConnection();
+          this.conn.setAutoCommit(false);
+        }
+        catch (Exception localException2)
+        {
+          throw localException2;
+        }
+      }
+      throw localSQLException;
+    }
+    catch (Exception localException1)
+    {
+      this.conn = null;
+      
+      throw localException1;
+    }
+    return this.user;
+  }
+  
+  public ArrayList getAllUsers()
+    throws Exception
+  {
+    try
+    {
+      ArrayList localArrayList = new ArrayList();
+      MyResultSet localMyResultSet = executeQuery("SELECT USERNAME FROM ALL_USERS ORDER BY USERNAME");
+      while (localMyResultSet.hasMoreElements()) {
+        localArrayList.add(localMyResultSet.getColumnValue(1));
+      }
+      localMyResultSet.close();
+      return localArrayList;
+    }
+    catch (Exception localException)
+    {
+      throw localException;
+    }
+  }
+  
+  public ArrayList getTableNames(String paramString)
+    throws Exception
+  {
+    ArrayList localArrayList = new ArrayList();
+    MyResultSet localMyResultSet = executeQuery("SELECT TABLE_NAME FROM ALL_TABLES WHERE OWNER = '" + paramString + "' ORDER BY TABLE_NAME");
+    while (localMyResultSet.hasMoreElements()) {
+      localArrayList.add(localMyResultSet.getColumnValue(1));
+    }
+    localMyResultSet.close();
+    return localArrayList;
+  }
+  
+  public boolean isDBA()
+    throws Exception
+  {
+    return true;
+  }
+  
+  public ArrayList getObjects(String paramString)
+    throws Exception
+  {
+    ArrayList localArrayList = new ArrayList();
+    
+    String str = SqlFactory.getAllObjectsSql(paramString);
+    MyResultSet localMyResultSet;
+    try
+    {
+      localMyResultSet = executeQuery(str);
+      while (localMyResultSet.hasMoreElements())
+      {
+        DBObject localDBObject1 = new DBObject();
+        localDBObject1.setOwner((String)localMyResultSet.getColumnValue(1));
+        localDBObject1.setObjectType((String)localMyResultSet.getColumnValue(2));
+        localDBObject1.setObjectName((String)localMyResultSet.getColumnValue(3));
+        localArrayList.add(localDBObject1);
+      }
+    }
+    catch (Exception localException1)
+    {
+      throw localException1;
+    }
+    try
+    {
+      str = SqlFactory.getTableSpaceSql();
+      
+      localMyResultSet = executeQuery(str);
+      while (localMyResultSet.hasMoreElements())
+      {
+        DBObject localDBObject2 = new DBObject();
+        localDBObject2.setOwner((String)localMyResultSet.getColumnValue(1));
+        localDBObject2.setObjectType((String)localMyResultSet.getColumnValue(2));
+        localDBObject2.setObjectName((String)localMyResultSet.getColumnValue(3));
+        localArrayList.add(localDBObject2);
+      }
+    }
+    catch (Exception localException2) {}
+    try
+    {
+      str = SqlFactory.getDBLinkSql(paramString);
+      
+      localMyResultSet = executeQuery(str);
+      while (localMyResultSet.hasMoreElements())
+      {
+        DBObject localDBObject3 = new DBObject();
+        localDBObject3.setOwner((String)localMyResultSet.getColumnValue(1));
+        localDBObject3.setObjectType((String)localMyResultSet.getColumnValue(2));
+        localDBObject3.setObjectName((String)localMyResultSet.getColumnValue(3));
+        localArrayList.add(localDBObject3);
+      }
+    }
+    catch (Exception localException3) {}
+    try
+    {
+      str = SqlFactory.getRecyleBinSql();
+      
+      localMyResultSet = executeQuery(str);
+      while (localMyResultSet.hasMoreElements())
+      {
+        DBObject localDBObject4 = new DBObject();
+        localDBObject4.setOwner((String)localMyResultSet.getColumnValue(1));
+        localDBObject4.setObjectType((String)localMyResultSet.getColumnValue(2));
+        localDBObject4.setObjectName((String)localMyResultSet.getColumnValue(3));
+        localArrayList.add(localDBObject4);
+      }
+    }
+    catch (Exception localException4) {}
+    localMyResultSet.close();
+    return localArrayList;
+  }
+  
+  public int getColumnCount(String paramString1, String paramString2)
+    throws Exception
+  {
+    try
+    {
+      String str = "select count(1) from all_tab_columns where owner = '" + paramString1 + "'";
+      str = str + " and table_name = '" + paramString2 + "'";
+      Statement localStatement = this.conn.createStatement();
+      ResultSet localResultSet = localStatement.executeQuery(str);
+      
+      int i = 0;
+      if (localResultSet.next()) {
+        i = localResultSet.getInt(1);
+      }
+      localResultSet.close();
+      localStatement.close();
+      return i;
+    }
+    catch (Exception localException)
+    {
+      throw localException;
+    }
+  }
+  
+  public ArrayList getColumnNames(String paramString1, String paramString2)
+    throws Exception
+  {
+    String str = "select COLUMN_NAME from all_tab_columns where owner = '" + paramString1 + "'";
+    str = str + " and table_name = '" + paramString2.toUpperCase() + "' order by column_id";
+    ArrayList localArrayList = new ArrayList();
+    MyResultSet localMyResultSet = executeQuery(str);
+    while (localMyResultSet.hasMoreElements()) {
+      localArrayList.add(localMyResultSet.getColumnValue(1));
+    }
+    localMyResultSet.close();
+    
+    return localArrayList;
+  }
+  
+  public void commit()
+    throws Exception
+  {
+    if (this.conn == null) {
+      return;
+    }
+    try
+    {
+      this.conn.commit();
+    }
+    catch (Exception localException)
+    {
+      throw localException;
+    }
+  }
+  
+  public void rollback()
+    throws Exception
+  {
+    if (this.conn == null) {
+      return;
+    }
+    try
+    {
+      this.conn.rollback();
+    }
+    catch (Exception localException)
+    {
+      throw localException;
+    }
+  }
+  
+  public synchronized String QueryRecord(String paramString)
+  {
+    String str1 = "";
+    String str2 = "";
+    try
+    {
+      MyResultSet localMyResultSet = executeQuery(paramString);
+      while (localMyResultSet.next())
+      {
+        str2 = localMyResultSet.getString(1);
+        str1 = str1 + str2;
+      }
+      localMyResultSet.close();
+    }
+    catch (Exception localException)
+    {
+      System.out.println("Error:" + localException.getMessage());
+    }
+    return str1;
+  }
+  
+  public synchronized MyResultSet executeQuery(String paramString)
+    throws Exception
+  {
+    if (this.conn == null) {
+      throw new NoConnectionException();
+    }
+    DebugWindow.printLog(paramString);
+    
+    long l1 = System.currentTimeMillis();
+    
+    MyResultSet localMyResultSet = new MyResultSet(this.conn, paramString);
+    long l2 = System.currentTimeMillis();
+    localMyResultSet.setTiming(l2 - l1);
+    
+    return localMyResultSet;
+  }
+  
+  public synchronized String executeUpdate(String paramString)
+    throws SQLException
+  {
+    DebugWindow.printLog(paramString);
+    try
+    {
+      long l1 = System.currentTimeMillis();
+      Statement localStatement = this.conn.createStatement();
+      localStatement.executeUpdate(paramString);
+      long l2 = System.currentTimeMillis();
+      localStatement.close();
+      return l2 - l1 + " ms  |   " + localStatement.getUpdateCount() + " rows.";
+    }
+    catch (SQLException localSQLException)
+    {
+      throw localSQLException;
+    }
+  }
+  
+  public void close()
+  {
+    try
+    {
+      if (this.conn != null)
+      {
+        this.conn.close();this.conn = null;
+      }
+    }
+    catch (SQLException localSQLException) {}
+  }
+  
+  public String prepareCall(String paramString)
+    throws Exception
+  {
+    long l1 = System.currentTimeMillis();
+    
+    CallableStatement localCallableStatement = this.conn.prepareCall(paramString);
+    localCallableStatement.execute();
+    long l2 = System.currentTimeMillis();
+    return l2 - l1 + " ms.";
+  }
+  
+  public static void main(String[] paramArrayOfString)
+  {
+    TNSUrl localTNSUrl = new TNSUrl();
+    localTNSUrl.setType("thin");
+    localTNSUrl.setHost("192.175.98.120:4100:ORAU");
+    
+    localTNSUrl.setUser("OPS$SCS214");
+    localTNSUrl.setPassword("SCS214");
+    ConnectDB localConnectDB = new ConnectDB(localTNSUrl);
+    String str = "EXPLAIN PLAN FOR select * from test where user=9951";
+    try
+    {
+      localConnectDB.Open();
+      localConnectDB.executeUpdate(str);
+      MyResultSet localMyResultSet = localConnectDB.executeQuery("SELECT PLAN_TABLE_OUTPUT FROM TABLE(DBMS_XPLAN.DISPLAY())");
+      Object[][] arrayOfObject = localMyResultSet.getAllElement();
+      for (int i = 0; i < arrayOfObject.length; i++) {
+        System.out.println(arrayOfObject[i][0]);
+      }
+    }
+    catch (Exception localException)
+    {
+      localException.printStackTrace();
+    }
+  }
+}

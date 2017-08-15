@@ -1,0 +1,31 @@
+cd C:\postgresql\src\tools\msvc
+
+Unable to determine Visual Studio version: The nmake command wasn't found. at src/tools/msvc/Mkvcbuild.pm line 86.
+
+#	my $vsVersion = DetermineVisualStudioVersion();
+	my $vsVersion = '12.00';	
+	
+
+cl command not found at src/tools/msvc/Solution.pm line 80.
+
+C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin
+を環境変数へ
+
+install C:\postgres
+
+--インストール完了
+
+--初期処理
+
+C:\postgres\dataを作成
+
+cd C:\postgres\bin
+ .\initdb.exe -D C:\postgres\data
+ 
+ 
+ .\postgres.exe -D C:\postgres\data
+ 
+※ユーザはログインしているユーザになる 
+	
+
+

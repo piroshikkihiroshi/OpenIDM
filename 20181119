@@ -1,0 +1,67 @@
+Sub testaaa()
+    Dim objTmp
+    Dim objTmp2
+    Dim colRet As Collection
+    
+    
+    Set colRet = csvFileToCol("C:\Users\ueda tatsuya\Desktop\test.csv")
+    
+    For Each objTmp In colRet
+        For Each objTmp2 In objTmp
+            Debug.Print objTmp2
+        Next objTmp2
+        Debug.Print vbCrLf
+    Next objTmp
+    
+    
+    
+    
+End Sub
+
+
+Function csvFileToCol(ByVal strFilePath_i As String) As Collection
+    Dim strBuf As String
+    Dim arrTmp As Variant
+    Dim colTmp As Collection
+    Dim objTmp
+    Dim objRegrep As New RegExp
+    Dim strPattern As String
+    Dim strTmp As String
+    Dim strTmp2 As String
+    Dim strTmpSep As String
+    Dim colRet As New Collection
+    
+    strTmpSep = "【分割】" '正規表現で直接分割できないので、一度「strTmpSep」でReplaceしてからSplitする
+    strPattern = ",(?=(?:[^\""]*\""[^\""]*\"")*[^\""]*$)" 'パースされたセパレータ文字列対応
+    objRegrep.Pattern = strPattern       ''検索パターンを設定
+    objRegrep.IgnoreCase = True          ''大文字と小文字を区別しない
+    objRegrep.Global = True              ''文字列全体を検索
+        
+    
+    Open strFilePath_i For Input As #1
+        Do Until EOF(1)
+            Line Input #1, strBuf
+            strTmp = objRegrep.Replace(strBuf, strTmpSep) '正規表現で直接分割できないので、一度「strTmpSep」でReplaceしてからSplitする
+            arrTmp = Split(strTmp, strTmpSep)
+            Set colTmp = New Collection
+            For Each objTmp In arrTmp 'エスケープしている場合ダブルコーテーションを処理する必要がある。
+                If Left(objTmp, 1) = """" And Right(objTmp, 1) = """" Then '先頭、末尾がダブルコーテーションならエスケープ処理を外す
+                    strTmp2 = Mid(objTmp, 2) '先頭末尾は削除
+                    strTmp2 = Mid(strTmp2, 1, Len(strTmp2) - 1) '先頭末尾は削除
+                    strTmp2 = Replace(strTmp2, """""", """") 'ダブルコーテーションは一つにする
+                Else
+                    strTmp2 = objTmp
+                End If
+                colTmp.Add strTmp2
+            Next objTmp
+            
+            colRet.Add colTmp
+        Loop
+    Close #1
+    
+    Set csvFileToCol = colRet
+    Set objRegrep = Nothing
+
+    
+    
+End Function

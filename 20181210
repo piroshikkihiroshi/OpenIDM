@@ -1,0 +1,70 @@
+
+
+
+
+
+
+
+
+
+<!DOCTYPE HTML">
+
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title></title>
+<link href='/EELearning/bootstrap/css/bootstrap.min.css' rel='stylesheet'>
+<link href='/EELearning/css/common.css' rel='stylesheet'>
+<script src='/EELearning/bootstrap/js/jquery-1.11.2.min.js'></script>
+<script src='/EELearning/bootstrap/js/bootstrap.min.js'></script>
+<script src='/EELearning/js/common.js'></script>
+
+</head>
+
+	
+
+<script>
+	$(function() { //init
+		//Header include
+		var strHeadPath = '../header.jsp';
+		$("#head").load(strHeadPath);
+
+	});
+
+</script>
+
+
+
+<body style='padding-top: 70px;'>
+
+	<!--header-->
+	<div id="head"></div>
+
+	<div class="container">
+
+		<div class="alert alert-info">受講したいe-ラーニングをクリックしてください。</div>
+		<!-- Table -->
+		<div class="panel panel-primary">
+			<div class="panel-heading">受講可能e-ラーニング</div>
+
+			<div class="table-responsive">
+				<table class="table table-striped table-bordered table-hover">
+					<thead>
+						<tr>
+							<!-- <th>No.</th> -->
+							<th>ELearning Name</th>
+							<th>Status</th>
+						</tr>
+					</thead>
+					<tbody>
+					<tr onClick="window.open('/EELearning/eLearnig/11111112222/')"><td>20181112_test</td><td>受講中</td></tr><tr onClick="window.open('/EELearning/eLearnig/Excelmacro/')"><td>エクセルマクロ使用術</td><td>受講中</td></tr><tr onClick="window.open('/EELearning/eLearnig/20180221/')"><td>Eラーニング内製化について</td><td>受講完了</td></tr><tr onClick="window.open('/EELearning/eLearnig/ligetNote/')"><td>ライトニングトーク(notes)</td><td>受講中</td></tr><tr onClick="window.open('/EELearning/eLearnig/ligettext/')"><td>ライトニングトーク(本文)</td><td>受講中</td></tr><tr onClick="window.open('/EELearning/eLearnig/test/')"><td>音声テスト</td><td>受講完了</td></tr><tr onClick="window.open('/EELearning/eLearnig/presentation/')"><td>簡易eラーニング</td><td>受講完了</td></tr>
+					</tbody>
+				</table>
+			</div>
+			<!--/table-responsive-->
+		</div>
+		<!--/panel-->
+	</div>
+
+</body>

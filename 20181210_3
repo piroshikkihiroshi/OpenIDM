@@ -1,0 +1,228 @@
+
+		/****************************************************************
+		* ヴァリデーションチェック関数
+		* 引数 ： strTgtDomId_i チェックするDomID
+		* 引数 ： intStatus_i チェックステータス
+		* inStatus_i 0:半角文字、1:全角文字
+		* 戻り値： Ok、false:NG
+		****************************************************************/
+		function validationFrom(
+				strTgtDomId_i,
+				intStatus_i) {
+
+			var objTgtVal = document.getElementById(strTgtDomId_i).value;
+			var blRet = false;
+
+			switch (intStatus_i) {
+				case 1:		//nullチェック
+				if(objTgtVal != ""){
+					return true;
+				}else{
+					return false;
+				}
+
+				case 2:		//マルチバイトチェック
+					blRet = CheckLength(objTgtVal,1);
+					return !blRet;
+			}
+
+
+
+			return false;
+		}
+
+		/****************************************************************
+		* 全角/半角文字判定
+		* 引数 ： strTgt_i チェックする文字列
+		* inStatus_i 0:半角文字、1:全角文字
+		* 戻り値： true:含まれている、false:含まれていない
+		****************************************************************/
+		function CheckLength(
+				strTgt_i,
+				inStatus_i) {
+		    for (var i = 0; i < strTgt_i.length; i++) {
+		        var c = strTgt_i.charCodeAt(i);
+		        // Shift_JIS: 0x0 ～ 0x80, 0xa0 , 0xa1 ～ 0xdf , 0xfd ～ 0xff
+		        // Unicode : 0x0 ～ 0x80, 0xf8f0, 0xff61 ～ 0xff9f, 0xf8f1 ～ 0xf8f3
+		        if ( (c >= 0x0 && c < 0x81) || (c == 0xf8f0) || (c >= 0xff61 && c < 0xffa0) || (c >= 0xf8f1 && c < 0xf8f4)) {
+		            if(!inStatus_i) return true;
+		        } else {
+		            if(inStatus_i) return true;
+		        }
+		    }
+		    return false;
+		}
+
+
+
+<%@ page language="java" contentType="text/html; charset=utf-8"
+	pageEncoding="utf-8"%>
+<%@ page import="java.io.IOException"%>
+<%@ page import="java.sql.Connection"%>
+<%@ page import="java.sql.DriverManager"%>
+<%@ page import="java.sql.PreparedStatement"%>
+<%@ page import="java.sql.ResultSet"%>
+<%@ page import="java.sql.SQLException"%>
+<%@ page import="java.sql.Statement"%>
+<!DOCTYPE HTML">
+
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title></title>
+<link href='<%= request.getContextPath() %>/bootstrap/css/bootstrap.min.css' rel='stylesheet'>
+<link href='<%= request.getContextPath() %>/css/common.css' rel='stylesheet'>
+<script src='<%= request.getContextPath() %>/bootstrap/js/jquery-1.11.2.min.js'></script>
+<script src='<%= request.getContextPath() %>/bootstrap/js/bootstrap.min.js'></script>
+<script src='<%= request.getContextPath() %>/js/common.js'></script>
+
+</head>
+
+	<%
+	//Session取得
+	common.GCls objCom = new common.GCls();
+	HttpSession objSession = request.getSession();
+	String strUserId = "";
+	try{
+		strUserId=	objSession.getAttribute("UserId").toString();
+	}catch(Exception e){
+		response.sendRedirect(objCom.REDIRECT_LOGIN);	//セッション取得不可時はログイン画面へリダイレクト
+		return;
+	}
+
+	//local変数
+	String strHtml = "";
+
+	//DB処理用変数宣言
+	Statement objStmt = null;
+	ResultSet objRs = null;
+	String strSql = "";
+	int intCnt = 0;
+	int intStatus = 0;
+	//DB処理用変数宣言終了
+
+	if(objCom.getObjDbMgr() == null){
+		String strPropPath = getServletContext().getRealPath("/" + objCom.DB_PROP_NAME) ;	//DirectoryPath作成
+		objCom.setObjDbMgr(new db.DbManager(strPropPath));
+	}
+
+	objStmt = objCom.getObjDbMgr().getObjStmt();
+
+	//eラーニング受講一覧を取得
+	strSql += "select elearningid,elearningname,createdate,modifydate from elearning" + "\r\n" ;
+	strSql += "ORDER BY modifydate DESC " + "\r\n" ;
+
+	try {
+		objRs = objStmt.executeQuery(strSql);
+		while(objRs.next()){
+			strHtml += "<tr onClick=deleteCheck('" + objRs.getString("elearningid") + "','" + objRs.getString("elearningname") + "')>";
+			strHtml += "<td>";
+			strHtml += objRs.getString("elearningname");
+			strHtml += "</td>";
+			strHtml += "<td>";
+			strHtml += objRs.getString("createdate");
+			strHtml += "</td>";
+			strHtml += "<td>";
+			strHtml += objRs.getString("modifydate");
+			strHtml += "</td>";
+			strHtml += "</tr>";
+
+			intCnt++;
+		}
+
+		if(intCnt ==0) strHtml = "<tr><td colspan=2>現在e-ラーニングは登録されていません。</td></tr>";
+
+
+	} catch (Exception e) {
+		System.err.println(e);
+	}
+
+
+
+
+
+
+	%>
+
+<script>
+	$(function() { //init
+		//Header include
+		var strHeadPath = '../header.jsp';
+		$("#head").load(strHeadPath);
+
+	});
+
+function deleteCheck(strElearningId_i,strElearningName_i){
+
+	if(window.confirm('eラーニング「' + strElearningName_i + '」を削除しますがよろしいですか？')){
+		document.getElementById('elearningId').value = strElearningId_i;
+		document.getElementById('elearningName').value = strElearningName_i;
+		//objEDom.nodeValue = strElearningId_i;
+		var objForm = document.getElementById('delForm');
+		var objFormData = new FormData(objForm); // FormData オブジェクトを作成
+		var strHtml = "";
+		strHtml += "<div class='alert alert-warning role='alert''>";
+		strHtml += "'eラーニング削除中です。しばらくお待ちください。";
+		strHtml += "</div>";
+		strHtml += ' <div class="loading"></div>';
+		$('#loadId').html(strHtml); //load中にする
+
+		$.ajax({
+			type: 'POST',
+			url: '/EELearning/ELearningDelServlet',
+			data: objFormData,
+			processData: false, // Ajaxがdataを整形しない指定
+			contentType: false, // contentTypeもfalseに指定(Fileをアップロード時は必要)
+			success: function(data) {
+				$('#loadId').html(data); //戻ってきたデータと入れ替える
+				console.log("success");
+				return false;
+			}
+		});
+	}
+
+}
+
+</script>
+
+
+
+<body style='padding-top: 70px;'>
+
+	<!--header-->
+	<div id="head"></div>
+
+	<div class="container">
+		<div id="loadId">
+			<form name="delForm" id="delForm" method="post" enctype="multipart/form-data">
+				<div class="alert alert-warning">削除したいe-ラーニングをクリックしてください。</div>
+				<!-- Table -->
+				<div class="panel panel-danger">
+					<div class="panel-heading">e-ラーニング一覧</div>
+
+					<div class="table-responsive">
+						<table class="table table-striped table-bordered table-hover">
+							<thead>
+								<tr>
+									<!-- <th>No.</th> -->
+									<th>ELearning Name</th>
+									<th>Create Date</th>
+									<th>Modify Date</th>
+								</tr>
+							</thead>
+							<tbody>
+								<%=strHtml %>
+							</tbody>
+						</table>
+					</div>
+					<!--/table-responsive-->
+				</div>
+				<!--/panel-->
+				<input type="hidden" id="elearningId" name="elearningId" value="">
+				<input type="hidden" id="elearningName" name="elearningName" value="">
+			</form>
+		</div>
+	</div>
+
+</body>

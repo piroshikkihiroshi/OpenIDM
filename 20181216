@@ -1,0 +1,145 @@
+<!DOCTYPE HTML">
+
+
+
+<head>
+	<meta charset='utf-8'>
+	<meta http-equiv='X-UA-Compatible' content='IE=edge'>
+	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<title></title>
+	<link href='./bootstrap/css/bootstrap.min.css' rel='stylesheet'>
+<!--	<link href='/EELearning/css/common.css' rel='stylesheet'>-->
+	<script src='./bootstrap/js/jquery-1.11.2.min.js'></script>
+	<script src='./bootstrap/js/bootstrap.min.js'></script>
+	<script src='./js/common.js'></script>
+
+</head>
+
+
+
+<style>
+	.panel-body {
+		min-height: 300px;
+	}
+</style>
+
+
+<script>
+	$(function() { //init
+		//Header include
+		var strHeadPath = '../header.jsp';
+		$("#head").load(strHeadPath);
+
+		// 半角英数以外入力不可イベント
+		$('#UserId').on('input', function() {
+			var strVal = $(this).val();
+			$(this).val(strVal.replace(/[^0-9a-zA-Z]/g, ""));
+		});
+
+	});
+
+
+	function changeTab(strTgtTabName_i) {
+		//tabを非表示
+		var objTabGroup = document.getElementsByClassName("tabGroup");
+		for (var i = 0; i < objTabGroup.length; i++) {
+			objTabGroup[i].style.display = 'none';
+		}
+		// 指定tab表示
+		document.getElementById(strTgtTabName_i).style.display = 'block';
+
+	}
+
+
+	function eSearch() {
+
+
+		var objForm = document.getElementById('searchForm');
+		var objFormData = new FormData(objForm); // FormData オブジェクトを作成
+		var strHtml = "";
+		strHtml += "<div class='alert alert-warning role='alert''>";
+		strHtml += "検索中です。しばらくお待ちください。";
+		strHtml += "</div>";
+		strHtml += ' <div class="loading"></div>';
+		$('#resultTab').html(strHtml); //resultTabをload中にする
+
+		//resultTabをアクティブにする
+		$('.nav-tabs a[href="#result"]').tab('show');
+		changeTab('resultTab');
+
+		$.ajax({
+			type: 'POST',
+			url: '/EELearning/ELearningSearchServlet',
+			data: objFormData,
+			processData: false, // Ajaxがdataを整形しない指定
+			contentType: false, // contentTypeもfalseに指定(Fileをアップロード時は必要)
+			success: function(data) {
+				$('#resultTab').html(data); //戻ってきたデータと入れ替える
+				console.log("success");
+				return false;
+			}
+		});
+
+
+
+	}
+</script>
+
+
+
+<body style='padding-top: 70px;'>
+
+	<!--header-->
+	<div id="head"></div>
+
+	<div class="container">
+
+		<div id='errMsg'></div>
+
+		<div id="loadId">
+
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					受講状況を検索してください
+				</div>
+				<div class="panel-body">
+
+					<form name="searchForm" id="searchForm" method="post" enctype="multipart/form-data">
+						<ul class="nav nav-tabs" style="margin-bottom: 15px">
+							<li class="active"><a href="#condition" data-toggle="tab" onclick="changeTab('conditionTab');">Condition</a></li>
+							<li><a href="#result" data-toggle="tab" onclick="changeTab('resultTab');">Result</a></li>
+						</ul>
+
+						<div id="conditionTab" class="form-horizontal tabGroup" style="padding-bottom: 15px">
+
+
+							<label class="control-label col-sm-1">ELearning</label>
+							<input type='text' name="ELearningName" placeholder="ELearningName">
+							<br>
+							<br>
+
+							<label class="control-label col-sm-1">UserName</label>
+							<input type='text' name="UserName" placeholder="UserName">
+							<br>
+							<br>
+							<div class="form-group">
+								<div class="col-sm-offset-1 col-sm-1">
+									<input class="btn btn-primary center-block" onclick="eSearch()" value="Search">
+								</div>
+							</div>
+						</div>
+					</form>
+
+					<div id="resultTab" class="tab-content col-sm-12 tabGroup">
+
+						<div class="tab-pane active" id="condition"></div>
+						<div class="tab-pane" id="result">please search</div>
+					</div>
+				</div>
+			</div>
+
+
+		</div>
+	</div>
+
+</body>

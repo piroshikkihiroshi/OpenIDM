@@ -1,0 +1,21 @@
+select * from 
+(
+select 
+'aaaa'::text as test,
+'bbbb'::text as test2
+) t1
+right outer join
+
+(
+select 
+'aaaA'::text as test,
+'bbb'::text as test2
+) t2
+
+-- using(
+-- test
+-- )
+
+ on t1.test ilike t2.test and
+ t1.test2 ilike t2.test2
+ 

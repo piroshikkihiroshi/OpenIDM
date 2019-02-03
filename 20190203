@@ -1,0 +1,23 @@
+	simple_validation					
+						
+カラム情報						
+No	論理名	物理名	データ型	Not Null	例	説明
+1	target_name				WGA	対象
+2	find_field_rule				column	"対象フィールドの特定方法。
+column・・・・対象列のヘッダーの値が「find_field_val」の値ならば対象フィールドとみなす"
+3	find_field_val				comment	対象フィールドの特定値
+4	rule_name				required	"指定したrule_nameで入力チェックを行う
+required,入力必須の確認。
+minlength,指定した文字数より少なくないかの確認。
+maxlength,指定した文字数より多くないかの確認。
+regexp,指定した正規表現に合致する値かの確認。"
+5	rule_value				,	rule_nameでチェックする値
+6	message					入力チェックではじかれた際、表示するメッセージ
+						
+						
+	※本システムのvalidation仕様					
+	本システムではvalidationを「単体入力チェック※1」と「突き合わせエラーチェック※2」とで大別する。					
+						
+						
+	※1 単体入力チェック・・・ユーザ入力値「のみ」で正誤判定ができるエラー。UI 部のみでチェックが可能					
+	※2 突き合わせエラーチェック・・・ユーザ入力値のみでは正誤判定できず、データベース上のデータなど、他のデータとの「突き合わせ」を行わないと正誤判定ができないエラー

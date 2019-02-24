@@ -1,0 +1,169 @@
+#DBIデータ型抜き出し
+foreach (@{ $DBI::EXPORT_TAGS{sql_types} }) {
+    my $refTypes = \&{"DBI::$_"};
+    my $strType = $_;
+    my $strVal = $refTypes->();
+	print "($strType)($strVal)__";
+} #foreach
+
+
+
+#------------------------
+
+
+
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Data::Dump;
+use Data::Dump qw(dump);
+use DBI;
+use DBI qw(:sql_types);
+
+ ##
+ # 引数2のテーブルカラム名とカラム名のデータ型と
+ # 対応したbind_param()の第三引数による型指定のマッピングhashを返す
+ # @param String DBハンドラ
+ # @param String テーブル名
+ # @param String(ref)) エラーがあった場合のみメッセージ格納
+ # @return hash key:カラム名 :value 対応したbind_param()の第三引数
+ ##
+sub getDBITypeHash($$$){
+	my $objDbh_i = $_[0];
+	my $strTable_i = $_[1];
+	my $strErrMsg = '';
+	my $strSql = '';
+	my %hashRet;
+	#マッピングしたいpostgresqlのデータ型をパイプつなぎ(正規表現で使用)で格納
+	#足りなかったら追加
+	#文字列データ型
+	my $strVarCharPos='character varying|varchar|text';
+	#charデータ型
+	my $strCharPos='^character$|^char$';
+	#数値データ型
+	my $strNumericPos='smallint|integer|bigint|decimal|numeric|real|double precision|smallserial|serial|bigserial';
+	#浮動小数点データ型
+	my $strDoublePos='real|double precision';
+	#TimeStampデータ型
+	my $strTimePos='timestamp with time zone|^date$';
+	#バイナリデータ型
+	my $strBinaryPos='bytea';
+	#論理値データ型
+	my $strBooleanPos='boolean';
+
+
+	$strSql.="SELECT ";
+	$strSql.="  at.attname ";
+	$strSql.="  , format_type(at.atttypid, at.atttypmod)  ";
+	$strSql.="FROM ";
+	$strSql.="  pg_attribute AS at  ";
+	$strSql.="  LEFT JOIN pg_type AS tp  ";
+	$strSql.="    ON (at.atttypid = tp.oid)  ";
+	$strSql.="WHERE ";
+	$strSql.="  at.attnum > 0  ";
+	$strSql.="  AND at.attrelid = (  ";
+	$strSql.="    SELECT ";
+	$strSql.="      relfilenode  ";
+	$strSql.="    FROM ";
+	$strSql.="      pg_class  ";
+	$strSql.="    WHERE ";
+	$strSql.="      relname = ? ";
+	$strSql.="  )  ";
+	$strSql.="ORDER BY ";
+	$strSql.="  at.attnum ";
+
+	my $objSth = $objDbh_i->prepare($strSql);
+	$objSth->bind_param(1, $strTable_i, SQL_VARCHAR);
+	$objSth->execute();
+	my @arrFields = @{$objSth->{NAME}};
+	while (my @arrRows = $objSth->fetchrow_array) { #arrRows loop
+		my $strClmName = $arrRows[0];
+		my $strClmType = $arrRows[1];
+	    # テーブルカラム名とカラム名のデータ型と対応したbind_param()の第三引数による型指定のマッピング
+
+		if($strClmType=~ /$strVarCharPos/i){ #文字列データ型
+			$hashRet{$strClmName} = SQL_VARCHAR;
+		}elsif($strClmType=~ /$strCharPos/i){ #charデータ型
+			$hashRet{$strClmName} = SQL_CHAR;
+		}elsif($strClmType=~ /$strNumericPos/i){ #数値データ型
+			$hashRet{$strClmName} = SQL_NUMERIC;
+		}elsif($strClmType=~ /$strDoublePos/i){ #浮動小数点データ型
+			$hashRet{$strClmName} = SQL_DOUBLE;
+		}elsif($strClmType=~ /$strTimePos/i){ #TimeStampデータ型
+			$hashRet{$strClmName} = SQL_TIMESTAMP;
+		}elsif($strClmType=~ /$strBinaryPos/i){ #バイナリデータ型
+			$hashRet{$strClmName} = SQL_BINARY;
+		}elsif($strClmType=~ /$strBooleanPos/i){ #論理値データ型
+			$hashRet{$strClmName} = SQL_BOOLEAN;
+		}else{
+			$strErrMsg = 'sub getDBITypeHash でデータ型定義マッピング不足です。対象カラム：' . $strClmName . '対象データ型：' . $strClmType;
+			$_[2] = $strErrMsg;
+			return %hashRet;
+		} #if
+	} #while
+	return %hashRet;
+
+} #sub
+
+
+
+
+#my $dsn = "dbi:Pg:database=arbitrageDemo;host=localhost;port=5432";
+my $dsn = "dbi:Pg:database=postgres;host=localhost;port=5432";
+my $user = "postgres";
+my $pass ="postgres";
+
+my $objDbh = DBI->connect( $dsn, $user, $pass, {
+    AutoCommit => 1,
+    PrintError => 0,
+    RaiseError => 1,
+    ShowErrorStatement => 1,
+    AutoInactiveDestroy => 1
+})|| die $DBI::errstr;
+
+#動的プレースホルダ
+my $strTgtTable = 'test_table';
+my $refErrMsg='';
+my %hashClmMap=getDBITypeHash($objDbh,$strTgtTable,$refErrMsg);
+
+if ($refErrMsg ne ''){
+	print $refErrMsg;
+} #if
+
+#teset
+my $strSql = '';
+$strSql.="SELECT * from $strTgtTable ";
+$strSql.=" WHERE ";
+$strSql.=" test_serial = ?  ";
+$strSql.="and test_varcher = ?  ";
+
+my $objSth = $objDbh->prepare($strSql);
+$objSth->bind_param(1, '0', $hashClmMap{'test_serial'});
+$objSth->bind_param(2, '0000000000', $hashClmMap{'test_varcher'});
+
+$objSth->execute();
+my @arrFields = @{$objSth->{NAME}};
+while (my @arrRows = $objSth->fetchrow_array) { #arrRows loop
+	for (my $i = 0; $i <= $#arrFields; $i++){ #clm loop
+#		print "clm $arrFields[$i] val::: $arrRows[$i] \n" ;
+		#TEST
+		my $strClm = $arrFields[$i];
+		my $strVal = $arrRows[$i];
+
+		my $aaa = 1;
+
+	} #for
+} #while
+
+
+
+
+
+
+#$objSth->finish;
+$objDbh->disconnect;
+
+
+

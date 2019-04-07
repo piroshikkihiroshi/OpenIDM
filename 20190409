@@ -1,0 +1,180 @@
+package db;
+
+import java.io.FileInputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.util.Properties;
+
+import javax.servlet.http.HttpServlet;
+
+/**
+ *
+ *DB操作クラス
+ *
+ * @since  : 20171210
+ * @author : t_ueda
+ *
+ */
+public class DbManager extends HttpServlet {
+
+	private	Connection objCon = null;
+	private	Statement objStmt = null;
+	private	FileInputStream objFs = null;
+	private	Properties objProp = null;
+
+	/**
+	 * コンストラクタ
+	 * DBとの接続を確率する
+	 */
+	public DbManager(String strPropPath_i){
+		int intRet = 0;
+		if(this.getObjCon() == null) intRet=this.initDb(strPropPath_i);
+		System.out.println(intRet);
+
+	}
+
+
+	//	public static void main(String[] args) {
+	//		DbManager objMe = new DbManager();
+	//		int intRet = 0;
+	//		if(objMe.getObjCon() == null) intRet=objMe.initDb();
+	//		System.out.println(intRet);
+	//
+	//		Statement objStatement = objMe.getObjStmt();
+	//
+	//		String strSql = "INSERT INTO public.users( userid , password , username , createdate , modifydate , authstate , expirationstate ) VALUES ('aa' , null , null , null , null , null , null ); ";
+	//
+	//		try {
+	//			intRet = objStatement.executeUpdate(strSql);
+	//			System.out.println(intRet);
+	//
+	//		} catch (SQLException e) {
+	//			e.printStackTrace();
+	//		}
+	//
+	//
+	//
+	//	}
+
+
+
+
+
+
+	public Connection getObjCon() {
+		return objCon;
+	}
+	public void setObjCon(Connection objCon) {
+		this.objCon = objCon;
+	}
+	public Statement getObjStmt() {
+		return objStmt;
+	}
+	public void setObjStmt(Statement objStmt) {
+		this.objStmt = objStmt;
+	}
+	public FileInputStream getObjFs() {
+		return objFs;
+	}
+
+	public void setObjFs(FileInputStream objFs) {
+		this.objFs = objFs;
+	}
+	public Properties getObjProp() {
+		return objProp;
+	}
+	public void setObjProp(Properties objProp) {
+		this.objProp = objProp;
+	}
+
+
+	/**
+	 * DB初期処理
+	 * @param String strPropPath_i プロパティファイルパス
+	 * @return int 成否ステータス
+	 */
+	public int initDb(String strPropPath_i){
+		int intRet = 0;
+		intRet =this.getProp(strPropPath_i);
+		System.out.println(intRet);
+
+		Properties objProp = null;
+		objProp = this.getObjProp();
+		String strDriver = objProp.getProperty("driver");
+		String strHost = objProp.getProperty("host");
+		String strPort = objProp.getProperty("port");
+		String strDatabase = objProp.getProperty("database");
+		String strUrl = "jdbc:postgresql://" + strHost + ":" + strPort + "/" + strDatabase;
+		String strUser = objProp.getProperty("user");
+		String strPassword = objProp.getProperty("password");
+
+		intRet=this.dbConnect(strDriver,strUrl, strUser, strPassword);
+
+		return 0;
+	}
+
+	/**
+	 * プロパティファイルを取得する
+	 * @param String strPropPath_i	プロパティファイルパス
+	 * @return int 成否ステータス
+	 */
+	public int getProp(String strPropPath_i){
+
+		try {
+			objFs = new FileInputStream(strPropPath_i);
+			objProp = new Properties();
+			objProp.load(objFs);
+			setObjProp(objProp);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return -1;
+		}
+
+		return 0;
+	}
+
+	/**
+	 *データベースへ接続する
+	 * @param String strDriver_i,			ドライバ名
+	 * @param String strUrl_i,				接続URL
+	 * @param String strUser_i				ユーザ
+	 * @param String  strPassword_i		パスワード
+	 * @return int 成否ステータス
+	 */
+	public int dbConnect(
+			String strDriver_i,
+			String strUrl_i,
+			String strUser_i
+			,String  strPassword_i
+			)  {
+
+		try {
+
+			Class.forName(strDriver_i);
+			objCon = DriverManager.getConnection(strUrl_i, strUser_i, strPassword_i);
+			objStmt = objCon.createStatement();
+			setObjCon(objCon);
+			setObjStmt(objStmt);
+
+		} catch (Exception e) {
+			System.err.println(e);
+			return -1;
+		} finally {
+
+		}
+
+		return 0;
+
+	}
+
+
+
+
+
+
+
+
+
+
+}

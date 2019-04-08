@@ -1,0 +1,51 @@
+package testPkg;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class Test1 {
+
+	public static void main(String[] args) {
+
+		String strDriver = "org.postgresql.Driver";
+		String strUrli = "jdbc:postgresql://localhost:5432/postgres";
+		String strUser = "postgres";
+		String strPassword = "postgres";
+
+		String sql1 = "INSERT INTO foo (No,Value)VALUES (?,?)";
+
+		try {
+			Class.forName(strDriver);
+			Connection objCon = DriverManager.getConnection(strUrli,
+					strUser, strPassword);
+
+			objCon.setAutoCommit(false);
+			PreparedStatement objPs = null;
+
+			try {
+				objPs = objCon.prepareStatement(sql1);
+				objPs.setInt(1, 1);
+				objPs.setString(2, "value1");
+				int intCnt= objPs.executeUpdate();
+				objCon.commit();
+			} catch (SQLException e) {
+				objCon.rollback(); //ロールバックする
+				throw e;
+			} finally {
+				//クローズ処理
+				if (objPs != null) objPs.close();
+				if (objCon != null) objCon.close();
+
+			} //try SQLException
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		} //try Exception
+
+	} // main
+
+
+} // class
+

@@ -1,0 +1,329 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>test</groupId>
+  <artifactId>06_MavenTest2</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>06_MavenTest2</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+
+<!-- https://mvnrepository.com/artifact/org.docx4j/docx4j -->
+<dependency>
+    <groupId>org.docx4j</groupId>
+    <artifactId>docx4j</artifactId>
+    <version>2.8.1</version>
+</dependency>
+
+  </dependencies>
+
+</project>
+
+///////////////////////////
+
+
+package test._MavenTest2;
+
+import java.io.ByteArrayOutputStream;
+//import java.io.OutputStream;
+import java.io.OutputStream;
+
+import org.docx4j.convert.out.Containerization;
+import org.docx4j.convert.out.html.AbstractHtmlExporter;
+import org.docx4j.convert.out.html.AbstractHtmlExporter.HtmlSettings;
+import org.docx4j.convert.out.html.HtmlExporterNG2;
+import org.docx4j.convert.out.html.SdtWriter;
+import org.docx4j.convert.out.html.TagSingleBox;
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+import org.docx4j.samples.AbstractSample;
+
+/**
+ * Hello world!
+ *
+ */
+public class App extends AbstractSample {
+
+	// Config for non-command line version
+	static {
+
+    	inputfilepath = System.getProperty("user.dir") + "/docs/Docx4j_GettingStarted.xml";
+
+		save = true;
+	}
+
+	static boolean save;
+
+    public static void main(String[] args)
+            throws Exception {
+
+		try {
+			getInputFilePath(args);
+		} catch (IllegalArgumentException e) {
+		}
+		inputfilepath = "C:/Users/ueda tatsuya/Desktop/poisample-master/test2.docx";
+		System.out.println(inputfilepath);
+		WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(new java.io.File(inputfilepath));
+
+		// HTML exporter setup
+		AbstractHtmlExporter exporter = new HtmlExporterNG2();
+
+		// .. the HtmlSettings object
+    	HtmlSettings htmlSettings = new HtmlSettings();
+
+    	htmlSettings.setImageDirPath(inputfilepath + "_files");
+    	htmlSettings.setImageTargetUri(inputfilepath.substring(inputfilepath.lastIndexOf("/")+1)
+    			+ "_files");
+
+    	htmlSettings.setUserBodyTop("<H1>TOP!</H1>");
+    	htmlSettings.setUserBodyTail("<H1>TAIL!</H1>");
+
+		// Sample sdt tag handler (tag handlers insert specific
+		// html depending on the contents of an sdt's tag).
+		// This will only have an effect if the sdt tag contains
+		// the string @class=XXX
+//			SdtWriter.registerTagHandler("@class", new TagClass() );
+
+		SdtWriter.registerTagHandler(Containerization.TAG_BORDERS, new TagSingleBox() );
+		SdtWriter.registerTagHandler(Containerization.TAG_SHADING, new TagSingleBox() );
+
+		// exporter writes to a Result object.
+		OutputStream os;
+		if (save) {
+			os = new java.io.FileOutputStream(inputfilepath + ".html");
+		} else {
+			os = new ByteArrayOutputStream();
+		}
+		javax.xml.transform.stream.StreamResult result = new javax.xml.transform.stream.StreamResult(os);
+
+		// OK, do it
+		exporter.html(wordMLPackage, result, htmlSettings);
+
+		if (save) {
+			System.out.println("Saved: " + inputfilepath + ".html using " +  exporter.getClass().getName() );
+		} else {
+			System.out.println( ((ByteArrayOutputStream)os).toString() );
+		}
+
+    }
+}
+
+
+
+
+
+-------------------------------new-------------------------
+
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>test</groupId>
+  <artifactId>06_MavenTest2</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>06_MavenTest2</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+
+<!-- https://mvnrepository.com/artifact/org.docx4j/docx4j -->
+<dependency>
+    <groupId>org.docx4j</groupId>
+    <artifactId>docx4j</artifactId>
+    <version>6.0.1</version>
+</dependency>
+
+  </dependencies>
+
+</project>
+
+
+
+////////////////////////////
+
+
+package test._MavenTest2;
+
+import java.io.OutputStream;
+
+import org.docx4j.Docx4J;
+import org.docx4j.Docx4jProperties;
+import org.docx4j.convert.out.ConversionFeatures;
+import org.docx4j.convert.out.html.AbstractHtmlExporter;
+import org.docx4j.convert.out.html.AbstractHtmlExporter.HtmlSettings;
+import org.docx4j.convert.out.html.HtmlExporterNG2;
+import org.docx4j.convert.out.html.SdtToListSdtTagHandler;
+import org.docx4j.convert.out.html.SdtWriter;
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+
+/**
+ * Hello world!
+ *
+ */
+public class App  {
+
+	static String dir;
+
+	protected static String inputfilepath;
+	protected static String outputfilepath;
+
+	// Config for non-command line version
+	static {
+
+//		dir = System.getProperty("user.dir") + "/sample-docs/docx/";
+		dir = "C:/Users/ueda tatsuya/Desktop/poisample-master/";
+//		dir = System.getProperty("user.dir") + "/";
+//    	inputfilepath = "sample-docxv2.docx";
+    	inputfilepath = "test2.docx";
+//    	inputfilepath = System.getProperty("user.dir") + "/sample-docs/docx/tables.docx";
+//    	inputfilepath = System.getProperty("user.dir") + "/images.docx";
+
+	}
+
+
+    public static void main(String[] args)
+            throws Exception {
+
+//    	String baseURL = "file:///C:/Users/jharrop/git/docx4j-ImportXHTML/images";
+
+    	Docx4jProperties.setProperty("docx4j.Convert.Out.HTML.OutputMethodXML", true);
+
+
+		try {
+			getInputFilePath(args);
+		} catch (IllegalArgumentException e) {
+		}
+
+		System.out.println(inputfilepath);
+		WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(new java.io.File(dir+inputfilepath));
+
+		// XHTML export
+		AbstractHtmlExporter exporter = new HtmlExporterNG2();
+    	HtmlSettings htmlSettings = new HtmlSettings();
+
+    	htmlSettings.setWmlPackage(wordMLPackage);
+
+    	htmlSettings.setImageDirPath(dir + inputfilepath + "_files");
+    	htmlSettings.setImageTargetUri(dir + inputfilepath + "_files");
+
+    	// list numbering:  depending on whether you want list numbering hardcoded, or done using <li>.
+		boolean nestLists = true;
+    	if (nestLists) {
+    		SdtWriter.registerTagHandler("HTML_ELEMENT", new SdtToListSdtTagHandler());
+    	} else {
+    		htmlSettings.getFeatures().remove(ConversionFeatures.PP_HTML_COLLECT_LISTS);
+    	} // must do one or the other
+
+
+    	String htmlFilePath = dir + "/DocxToXhtmlAndBack.html";
+		OutputStream os = new java.io.FileOutputStream(htmlFilePath);
+
+//		javax.xml.transform.stream.StreamResult result = new javax.xml.transform.stream.StreamResult(os);
+//		exporter.html(wordMLPackage, result, htmlSettings);
+//		os.flush();
+//		os.close();
+
+
+		Docx4J.toHTML(htmlSettings, os, Docx4J.FLAG_NONE);
+
+
+//		// XHTML to docx
+//        String stringFromFile = FileUtils.readFileToString(new File(htmlFilePath), "UTF-8");
+//
+//
+//		WordprocessingMLPackage docxOut = WordprocessingMLPackage.createPackage();
+//		NumberingDefinitionsPart ndp = new NumberingDefinitionsPart();
+//		docxOut.getMainDocumentPart().addTargetPart(ndp);
+//		ndp.unmarshalDefaultNumbering();
+//
+//        XHTMLImporterImpl XHTMLImporter = new XHTMLImporterImpl(docxOut);
+//        XHTMLImporter.setHyperlinkStyle("Hyperlink");
+//
+//		docxOut.getMainDocumentPart().getContent().addAll(
+//				XHTMLImporter.convert(stringFromFile, null) );
+//
+//		docxOut.save(new java.io.File(dir + "/DocxToXhtmlAndBack.docx") );
+
+    }
+
+	protected static void getInputFilePath(String[] args) throws IllegalArgumentException {
+
+		if (args.length==0) throw new IllegalArgumentException("Input file arg missing");
+
+		inputfilepath = args[0];
+	}
+
+	protected static void getOutputFilePath(String[] args) throws IllegalArgumentException {
+
+		if (args.length<2) throw new IllegalArgumentException("Output file arg missing");
+
+		outputfilepath = args[1];
+	}
+
+}
+
+
+///////////////////////////////
+
+
+	public void fromDocxToHtmlAndBack() throws Exception {
+//        WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(new File("path_to_docx"));
+        WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(new File("C:/Users/ueda tatsuya/Desktop/poisample-master/test2.docx"));
+        HTMLSettings htmlSettings = Docx4J.createHTMLSettings();
+        htmlSettings.setWmlPackage(wordMLPackage);
+        htmlSettings.setImageDirPath("C:/Users/ueda tatsuya/Desktop/poisample-master/tmp/");
+        htmlSettings.setImageTargetUri("C:/Users/ueda tatsuya/Desktop/poisample-master/tmp/");
+//        htmlSettings.setImageDirPath("java.io.tmpdir");
+//        htmlSettings.setImageTargetUri("java.io.tmpdir");
+
+//        String htmlFilePath = "path_to_converted_html";
+        String htmlFilePath = "C:/Users/ueda tatsuya/Desktop/poisample-master/test2.docxaaaaaaaaaaaaaa.html";
+        OutputStream os = new java.io.FileOutputStream(htmlFilePath);
+
+        // write html
+        Docx4J.toHTML(htmlSettings, os, Docx4J.FLAG_EXPORT_PREFER_XSL);
+
+    } //fromDocxToHtmlAndBack
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
